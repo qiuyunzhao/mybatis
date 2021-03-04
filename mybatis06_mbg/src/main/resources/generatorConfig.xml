@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE generatorConfiguration
+        PUBLIC "-//mybatis.org//DTD MyBatis Generator Configuration 1.0//EN"
+        "http://mybatis.org/dtd/mybatis-generator-config_1_0.dtd">
+<generatorConfiguration>
+    <!--
+        targetRuntime
+            "MyBatis3Simple" :生成简单版的CRUD
+            MyBatis3         :豪华版
+    -->
+    <context id="test" targetRuntime="MyBatis3">
+        <!--扩展功能插件-->
+        <plugin type="org.mybatis.generator.plugins.EqualsHashCodePlugin"></plugin>
+        <plugin type="org.mybatis.generator.plugins.SerializablePlugin"></plugin>
+        <plugin type="org.mybatis.generator.plugins.ToStringPlugin"></plugin>
+
+        <commentGenerator>
+            <!-- 这个元素用来去除指定生成的注释中是否包含生成的日期 false:表示包含 -->
+            <!-- 如果生成日期，会造成即使修改一个字段，整个实体类所有属性都会发生变化，不利于版本控制，所以设置为true -->
+            <property name="suppressDate" value="true"/>
+            <!-- 是否去除自动生成的注释 true：是 ： false:否 -->
+            <property name="suppressAllComments" value="false"/>
+        </commentGenerator>
+
+        <!--连接到目标数据库的URL，用户名、密码 -->
+        <jdbcConnection
+                driverClass="com.mysql.cj.jdbc.Driver"
+                connectionURL="jdbc:mysql://127.0.0.1:3306/mybatis?characterEncoding=UTF-8&amp;serverTimezone=GMT%2B8"
+                userId="root"
+                password="zhao17615110273">
+        </jdbcConnection>
+
+        <!--Java类型解析器-->
+        <javaTypeResolver>
+            <property name="forceBigDecimals" value="false"/>
+        </javaTypeResolver>
+
+        <!--
+            指定javaBean的生成策略:
+                targetPackage: bean存放的包名
+                targetProject：目标工程路径
+        -->
+        <javaModelGenerator targetPackage="com.haoqian.mbg.bean"
+                            targetProject="src/main/java">
+            <property name="enableSubPackages" value="true"/>
+            <property name="trimStrings" value="true"/>
+        </javaModelGenerator>
+
+        <!-- 生成sql映射文件的包名和位置 -->
+        <sqlMapGenerator targetPackage="mapper"
+                         targetProject="src/main/resources/mybatis">
+            <property name="enableSubPackages" value="true"/>
+        </sqlMapGenerator>
+
+        <!-- 生成mapper接口的包名和位置： mybatis两种开发模式 xml&注解式 -->
+        <javaClientGenerator type="XMLMAPPER"
+                             targetPackage="com.haoqian.mbg.mapper"
+                             targetProject="src/main/java">
+            <property name="enableSubPackages" value="true"/>
+        </javaClientGenerator>
+
+        <!--
+            要逆向生成哪些表:
+                tableName       : 数据库表名
+                domainObjectName: 映射实体类名称
+                xxxByExample    : 是否生成利用xxx的Example进行数据库操作的方法
+        -->
+        <table tableName="tb_dept" domainObjectName="Department"
+               enableCountByExample="false" enableUpdateByExample="false"
+               enableDeleteByExample="false" enableSelectByExample="false"
+               selectByExampleQueryId="false">
+        </table>
+        <table tableName="tb_employee" domainObjectName="Employee"/>
+
+    </context>
+</generatorConfiguration>

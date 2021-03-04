@@ -1,0 +1,237 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.haoqian.dynamic.mapper.EmployeeMapperDynamicSQL">
+
+    <!-- 查询员工，要求，携带了哪个字段查询条件就带上这个字段的查询条件 -->
+    <!-- public List<Employee> getEmpsByConditionIf(Employee employee); -->
+    <!--判断条件支持OGNL表达式语法-->
+    <!-- <where>标签能防止第一个if条件不满足而导致的sql自动拼接错误-->
+    <select id="getEmpsByConditionIf" resultType="com.haoqian.dynamic.domain.Employee">
+        SELECT * FROM tb_employee
+        <where>
+            <if test="id!=null">
+                id=#{id}
+            </if>
+            <if test="lastName!=null and lastName!=''">
+                AND last_name LIKE #{lastName}
+            </if>
+            <if test="email!=null and email.trim()!=''">
+                AND email=#{email}
+            </if>
+            <!-- ognl会进行字符串与数字的转换判断("0"==0) -->
+            <if test="gender==0 or gender==1">
+                AND gender=#{gender}
+            </if>
+            <if test="dept != null and dept.id != null">
+                AND d_id = #{dept.id}
+            </if>
+        </where>
+    </select>
+
+    <!--    ==================================================================================================-->
+    <!--public List<Employee> getEmpsByConditionTrim(Employee employee);  -->
+    <select id="getEmpsByConditionTrim" resultType="com.haoqian.dynamic.domain.Employee">
+        SELECT * FROM tb_employee
+        <!--
+        <trim>自定义字符串的截取规则(标签体中是整个字符串拼串后的结果)。
+            prefix=""          : 前缀 - 给拼串后的整个字符串加一个前缀;
+            prefixOverrides="" : 前缀覆盖 - 去掉整个字符串前面多余的字符;
+            suffix=""          : 后缀 - 给拼串后的整个字符串加一个后缀;
+            suffixOverrides="" : 后缀覆盖 - 去掉整个字符串后面多余的字符
+        -->
+        <trim prefix="WHERE" suffixOverrides="AND">
+            <if test="id!=null">
+                id=#{id} AND
+            </if>
+            <if test="lastName!=null and lastName!=''">
+                last_name LIKE #{lastName} AND
+            </if>
+            <if test="email!=null and email.trim()!=''">
+                email=#{email} AND
+            </if>
+            <!-- ognl会进行字符串与数字的转换判断("0"==0) -->
+            <if test="gender==0 or gender==1">
+                gender=#{gender} AND
+            </if>
+            <if test="dept != null and dept.id != null">
+                d_id = #{dept.id}
+            </if>
+        </trim>
+    </select>
+
+
+    <!--    ========================================================================================================-->
+    <!-- <when>标签只会进入其中一个并用于sql拼串 -->
+    <select id="getEmpsWithChoose" resultType="com.haoqian.dynamic.domain.Employee">
+        select * from tb_employee
+        <where>
+            <choose>
+                <when test="id!=null">
+                    id=#{id}
+                </when>
+                <when test="lastName!=null and lastName!=''">
+                    last_name like #{lastName}
+                </when>
+                <when test="email!=null and email.trim()!=''">
+                    email = #{email}
+                </when>
+                <otherwise>
+                    gender = 0
+                </otherwise>
+            </choose>
+        </where>
+    </select>
+
+    <!--    ==========================================================================================================-->
+
+    <!--public void updateEmp(Employee employee);  -->
+    <update id="updateWithSet">
+        <!--        UPDATE tb_employee-->
+        <!--        <set>-->
+        <!--            <if test="lastName!=null and lastName!=''">-->
+        <!--                last_name=#{lastName},-->
+        <!--            </if>-->
+        <!--            <if test="email!=null and email.trim()!=''">-->
+        <!--                email=#{email},-->
+        <!--            </if>-->
+        <!--            <if test="gender==0 or gender==1">-->
+        <!--                gender=#{gender}-->
+        <!--            </if>-->
+        <!--        </set>-->
+        <!--        WHERE id=#{id}-->
+
+        <!-- Trim：更新拼串 -->
+        update tb_employee
+        <trim prefix="set" suffixOverrides=",">
+            <if test="lastName!=null and lastName!=''">
+                last_name=#{lastName},
+            </if>
+            <if test="email!=null and email.trim()!=''">
+                email=#{email},
+            </if>
+            <if test="gender==0 or gender==1">
+                gender=#{gender}
+            </if>
+        </trim>
+        where id=#{id}
+    </update>
+
+    <!--  ====================================================================================================-->
+    <select id="getEmpsWithForeach" resultType="com.haoqian.dynamic.domain.Employee">
+        SELECT * FROM tb_employee WHERE
+        <!--
+            collection：指定要遍历的集合(list类型的参数会被封装在map中，map的key默认叫list)；
+            item      ：将当前遍历出的元素赋值给指定的临时变量;
+            separator : 每个元素之间的分隔符;
+            open      ：为遍历出所有结果拼接一个开始的字符;
+            close     : 为遍历出所有结果拼接一个结束的字符;
+            index     : 索引 遍历list的时候index就是索引,item就是当前值;
+                            遍历map的时候index就是map的key,item就是map的value;
+          -->
+        <foreach collection="ids" item="item_id" separator="," open="id in(" close=")" index="i">
+            #{item_id}
+        </foreach>
+    </select>
+
+    <!--  ====================================================================================================-->
+
+    <!--MySQL下批量保存：-->
+    <insert id="addEmps" databaseId="mysql">
+        INSERT INTO tb_employee(last_name,email,gender,d_id)
+        VALUES
+        <foreach collection="emps" item="emp" separator=",">
+            (#{emp.lastName},#{emp.email},#{emp.gender},#{emp.dept.id})
+        </foreach>
+    </insert>
+
+    <!--oracle下批量保存：-->
+    <insert id="addEmps" databaseId="oracle">
+        <!-- oracle第一种批量保存方式 -->
+        <!--        <foreach collection="emps" item="emp" open="begin" close="end;">-->
+        <!--            insert into employees(employee_id,last_name,email)-->
+        <!--            values(employees_seq.nextval,#{emp.lastName},#{emp.email});-->
+        <!--        </foreach>-->
+
+        <!-- oracle第二种批量方式  -->
+        insert into employees(emplate_id,last_name,email)
+        <foreach collection="emps" item="emp"
+                 open="select employees_seq.nextval,lastName,email from("
+                 separator="union"
+                 close=")">
+            select #{emp.lastName} lastName,#{emp.email} email from dual
+        </foreach>
+    </insert>
+
+    <!--  ====================================================================================================-->
+
+    <!--
+    两个内置参数：
+        不只是方法传递过来的参数可以被用来判断，取值。。。mybatis默认还有两个内置参数：
+            _parameter:代表整个参数
+                单个参数：_parameter就是这个参数
+                多个参数：参数会被封装为一个map；_parameter就是代表这个map
+
+            _databaseId:如果配置了databaseIdProvider标签。
+                 _databaseId就是代表当前数据库的别名oracle/mysql
+    -->
+
+    <!--public List<Employee> getEmpsTestInnerParameter(Employee employee);  -->
+    <select id="getEmpsInnerParameter" resultType="com.haoqian.dynamic.domain.Employee">
+        <if test="_databaseId=='mysql'">
+            select * from tb_employee
+            <if test="_parameter!=null and lastName!=null and lastName!=''">
+                where last_name like #{lastName}
+            </if>
+        </if>
+        <if test="_databaseId=='oracle'">
+            select * from employees
+            <if test="_parameter!=null and lastName!=null and lastName!=''">
+                where last_name like #{_parameter.lastName}
+            </if>
+        </if>
+    </select>
+
+    <!--  ====================================================================================================-->
+    <!-- bind：可以将OGNL表达式的值绑定到一个变量中，方便后来引用这个变量的值 -->
+
+    <select id="getEmpsBind" resultType="com.haoqian.dynamic.domain.Employee">
+        <bind name="_lastName" value="'%'+lastName+'%'"/>
+        <bind name="_condition" value="lastName!=null and lastName!=''"/>
+
+        select * from tb_employee
+        <if test="_condition">
+            where last_name like #{_lastName}
+        </if>
+    </select>
+
+    <!--  ====================================================================================================-->
+    <!--
+        抽取可重用的sql片段,方便后面引用:
+             <sql>标签用于抽取：经常将要查询用的列名，或者插入用的列名抽取出来方便引用
+             <include>标签用来引用已经用<sql>标签抽取的sql片段：
+             <include>标签内可以使用<property>标签来自定义一些变量；
+               <sql>标签内部能通过${prop}的方式获取并使用这些自定义变量；注意不能使用#{prop}的方式获取，否则会报错。
+    -->
+
+    <sql id="_columns">
+        <if test="_databaseId == 'mysql'">
+            last_name,${_email},gender,d_id
+        </if>
+        <if test="_databaseId != 'mysql'">
+            last_name,gender,
+        </if>
+    </sql>
+
+    <select id="getEmpSqlInclude" resultType="com.haoqian.dynamic.domain.Employee">
+        SELECT
+        <include refid="_columns">
+            <property name="_email" value="email"/>
+        </include>
+        FROM tb_employee
+        WHERE id = #{id}
+    </select>
+
+</mapper>

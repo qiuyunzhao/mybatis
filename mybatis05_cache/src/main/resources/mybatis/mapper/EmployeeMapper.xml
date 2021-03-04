@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.haoqian.cache.mapper.EmployeeMapper">
+
+    <!--配置使用mybatis的二级缓存-->
+    <!--<cache eviction="FIFO" flushInterval="60000" size="512" readOnly="false"/>-->
+
+    <!--配置使用EhcacheCache作为二级缓存-->
+    <cache type="org.mybatis.caches.ehcache.EhcacheCache">
+        <!--可以使用<property/>标签配置EhcacheCache属性-->
+        <property name="timeToIdleSeconds" value="3600"/>
+        <property name="timeToLiveSeconds" value="3600"/>
+    </cache>
+
+    <select id="getEmpById" resultType="com.haoqian.cache.domain.Employee"
+            useCache="true">
+		select * from tb_employee where id = #{id}
+	</select>
+
+    <insert id="addEmp" parameterType="com.haoqian.cache.domain.Employee"
+            useGeneratedKeys="true" keyProperty="id" flushCache="true">
+		insert into tb_employee(last_name,email,gender,d_id)
+		values(#{lastName},#{email},#{gender},101)
+	</insert>
+</mapper>

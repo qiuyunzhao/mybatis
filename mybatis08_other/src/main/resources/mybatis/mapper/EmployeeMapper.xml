@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.haoqian.other.mapper.EmployeeMapper">
+    <select id="getEmpById" resultType="com.haoqian.other.domain.Employee">
+		SELECT * FROM tb_employee WHERE id=#{id}
+	</select>
+
+    <select id="getEmps" resultType="com.haoqian.other.domain.Employee">
+		select id,last_name lastName,email,gender from tb_employee
+	</select>
+
+    <insert id="addEmp" useGeneratedKeys="true" keyProperty="id">
+		insert into tb_employee(last_name,email,gender,d_id)
+		values(#{lastName},#{email},#{gender},101)
+	</insert>
+
+    <!--
+		1、使用select标签定义调用存储过程
+		2、statementType="CALLABLE":表示要调用存储过程
+		3、{call procedure_name(params)}
+    -->
+    <select id="callProcedure" statementType="CALLABLE">
+		{call my_procedure(
+			#{did,mode=IN,jdbcType=INTEGER},
+			#{empCount,mode=OUT,jdbcType=INTEGER}
+		)}
+	</select>
+
+</mapper>

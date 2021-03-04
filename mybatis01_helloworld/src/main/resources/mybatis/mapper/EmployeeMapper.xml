@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!--
+ namespace：名称空间，用来映射哪个mapper接口
+ id： 唯一标识，用来映mapper接口中的那个方法
+ resultType： 查询结果绑定的实体类类型
+ #{id}：从传递过来的参数中，取出id的值
+-->
+<mapper namespace="com.haoqian.helloworld.mapper.EmployeeMapper">
+    <!-- 映射方法 public Employee getEmpById(Integer id); -->
+    <select id="getEmpById" resultType="com.haoqian.helloworld.domain.Employee">
+        SELECT * FROM tb_employee WHERE id=#{id}
+    </select>
+</mapper>

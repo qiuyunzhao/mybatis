@@ -1,0 +1,150 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.haoqian.mapper.mapper.EmployeeMapper2">
+    <!--
+        自定义某个javaBean的封装规则
+            type: 自定义规则映射的Java类型
+            id  : 自定规则的唯一id(方便引用)
+    -->
+    <resultMap type="com.haoqian.mapper.domain.Employee" id="MySimpleEmp">
+        <!--
+            指定封装规则：
+            id      ：指定数据库中主键字段的封装规则(可以使用column,但定义主键列底层会有优化);
+            column  ：指定数据库中某一字段的映射规则;
+            property：指定数据库中某一字段映射到的javaBean属性;
+            不指定的数据库字段会自动封装
+            但是，只要写resultMap就建议把全部字段的映射规则都写上,方便维护。
+          -->
+        <id column="id" property="id"/>
+        <result column="last_name" property="lastName"/>
+        <result column="email" property="email"/>
+        <result column="gender" property="gender"/>
+    </resultMap>
+
+    <!-- resultMap:使用自定义结果集的映射规则-->
+    <!-- public Employee getEmpById(Integer id); -->
+    <select id="getEmpById" resultMap="MySimpleEmp">
+		select * from tb_employee where id=#{id}
+	</select>
+
+
+    <!--================================================================================================================-->
+    <!--
+        关联查询：级联属性封装结果集
+     -->
+    <resultMap type="com.haoqian.mapper.domain.Employee" id="MyDifEmp1">
+        <id column="id" property="id"/>
+        <result column="last_name" property="lastName"/>
+        <result column="gender" property="gender"/>
+        <result column="email" property="email"/>
+        <result column="did" property="dept.id"/>
+        <result column="dept_name" property="dept.departmentName"/>
+    </resultMap>
+    <!--  public Employee getEmpAndDept(Integer id);-->
+    <select id="getEmpAndDept1" resultMap="MyDifEmp1">
+		SELECT e.id id,e.last_name last_name,e.gender gender,e.email email,e.d_id d_id,
+		d.id did,d.dept_name dept_name
+		FROM tb_employee e,tb_dept d
+		WHERE e.d_id=d.id AND e.id=#{id}
+	</select>
+
+    <!--================================================================================================================-->
+
+    <!-- 使用<association>标签定义关联的单个对象的封装规则 -->
+    <resultMap type="com.haoqian.mapper.domain.Employee" id="MyDifEmp2">
+        <id column="id" property="id"/>
+        <result column="last_name" property="lastName"/>
+        <result column="gender" property="gender"/>
+        <result column="email" property="email"/>
+        <!--
+            <association> 指定级联javaBean对象的映射规则
+                property: 指定对象中哪个属性是级联对象
+                javaType: 指定这个属性级联对象的类型[不能省略]
+        -->
+        <association property="dept" javaType="com.haoqian.mapper.domain.Department">
+            <id column="did" property="id"/>
+            <result column="dept_name" property="departmentName"/>
+        </association>
+    </resultMap>
+    <!--  public Employee getEmpAndDept2(Integer id);-->
+    <select id="getEmpAndDept2" resultMap="MyDifEmp2">
+		SELECT e.id id,e.last_name last_name,e.gender gender,e.email email,e.d_id d_id,
+		d.id did,d.dept_name dept_name
+		FROM tb_employee e,tb_dept d
+		WHERE e.d_id=d.id AND e.id=#{id}
+	</select>
+
+    <!--================================================================================================================-->
+    <!--
+        使用association进行分步查询：
+            1、先按照员工id查询员工信息；
+            2、根据查询员工信息中的d_id值去部门表查出部门信息；
+            3、部门设置到员工中；
+        注意整个过程需要两次数据库查询；
+     -->
+    <resultMap id="MyEmpByStep" type="com.haoqian.mapper.domain.Employee">
+        <id column="id" property="id"/>
+        <result column="last_name" property="lastName"/>
+        <result column="email" property="email"/>
+        <result column="gender" property="gender"/>
+        <!--
+            property: 指定对象中哪个属性是级联对象，子查询结果封装到该属性
+            select  : 分步查询需要使用的子查询语句对应的接口方法
+            column  : 将查询结果中哪个字段的值传入子查询语句作为后者的查询条件
+        流程：使用select指定的方法（传入column指定字段查询结果的值）查出对象，并封装给property指定的属性
+        -->
+        <association property="dept"
+                     select="com.haoqian.mapper.mapper.DepartmentMapper.getDeptById"
+                     column="d_id"
+                     fetchType="lazy">
+        </association>
+    </resultMap>
+
+    <select id="getEmpByIdStep" resultMap="MyEmpByStep">
+        select * from tb_employee where id=#{id}
+    </select>
+
+
+    <!--================================================================================================================-->
+
+    <!--    <discriminator>鉴别器：可以判断查询结果中某列的值，然后根据其改变封装行为     -->
+    <resultMap type="com.haoqian.mapper.domain.Employee" id="MyDiscriminator">
+        <id column="id" property="id"/>
+        <result column="last_name" property="lastName"/>
+        <result column="email" property="email"/>
+        <result column="gender" property="gender"/>
+        <!--
+            column  ：指定用于条件判定的字段名;
+            javaType：字段值对应的java类型
+        -->
+        <discriminator javaType="string" column="gender">
+            <!--
+                value：字段值应满足的条件；
+                resultType: 指定封装的结果类型[不能缺少]；
+            -->
+            <!--查询结果如果是女生，查询其部门信息进行封装-->
+            <case value="0" resultType="com.haoqian.mapper.domain.Employee">
+                <association property="dept"
+                             select="com.haoqian.mapper.mapper.DepartmentMapper.getDeptById"
+                             column="d_id"
+                             fetchType="eager">
+                </association>
+            </case>
+            <!--如果是男生，把last_name这一列的值赋值给email; -->
+            <case value="1" resultType="com.haoqian.mapper.domain.Employee">
+                <id column="id" property="id"/>
+                <result column="last_name" property="lastName"/>
+                <result column="last_name" property="email"/>
+                <result column="gender" property="gender"/>
+            </case>
+        </discriminator>
+    </resultMap>
+
+    <select id="getEmpDiscriminator" resultMap="MyDiscriminator">
+        select * from tb_employee where id=#{id}
+    </select>
+
+</mapper>

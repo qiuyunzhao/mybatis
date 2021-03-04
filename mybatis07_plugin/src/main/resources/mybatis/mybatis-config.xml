@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE configuration
+        PUBLIC "-//mybatis.org//DTD Config 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-config.dtd">
+<configuration>
+
+    <settings>
+        <!-- 开启驼峰命名法映射-->
+        <setting name="mapUnderscoreToCamelCase" value="true"/>
+        <!-- 开启sql日志打印-->
+        <setting name="logImpl" value="STDOUT_LOGGING"/>
+    </settings>
+
+
+    <!--plugins：注册插件  -->
+    <plugins>
+        <plugin interceptor="com.haoqian.mybatis07_plugin.plugin.MyFirstPlugin">
+            <!-- 给插件传入属性-->
+            <property name="username" value="root"/>
+            <property name="password" value="123456"/>
+        </plugin>
+        <plugin interceptor="com.haoqian.mybatis07_plugin.plugin.MySecondPlugin"/>
+    </plugins>
+
+</configuration>
